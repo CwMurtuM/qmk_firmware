@@ -15,11 +15,12 @@ enum custom_keycodes {
     _ROOF_NO_SHIT
 };
 
-#define MACRO_MAX_SIZE 64
+#define MACRO_MAX_SIZE 128
 static uint16_t s_macro[MACRO_MAX_SIZE];
 static int s_macro_cursor = 0;
 static bool s_macro_rec = false;
 static uint16_t s_last_pressed = 0;
+static int s_macro_pulse_count = 0;
 
     /*
     * LSFT(KC_NUHS)
@@ -52,7 +53,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	                                            _______, _______, _______,    _______, _______, _______),
 
     [NAV] = LAYOUT_split_3x6_3(
-	_______, XXXXXXX, KC_TILD, KC_CIRC, _MACRO_REC, _MACRO_PRINT,               _FAST_STEP_UP, KC_HOME, KC_UP,   KC_END,  KC_PGUP, _TILDE_NO_SHIT  /*RALT(KC_RBRC)~*/,
+	QK_BOOT, XXXXXXX, KC_TILD, KC_CIRC, _MACRO_REC, _MACRO_PRINT,               _FAST_STEP_UP, KC_HOME, KC_UP,   KC_END,  KC_PGUP, _TILDE_NO_SHIT  /*RALT(KC_RBRC)~*/,
 	_______, XXXXXXX, KC_LCTL, KC_LSFT, KC_LALT, KC_LGUI,                       _FAST_STEP_DOWN, KC_LEFT, KC_DOWN, KC_RGHT, KC_PGDN,  KC_BSLS/*'*/,
 	_______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                       KC_F3, _______, _______, _______, _______, _ROOF_NO_SHIT /*LSFT(KC_RBRC)^*/,
                                         _______, _______, _______,      KC_DEL, KC_ENT, XXXXXXX),
@@ -60,8 +61,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [F_ROW] = LAYOUT_split_3x6_3(
 	LALT(KC_F4), KC_F1, KC_F2, KC_F3, KC_F4, KC_F5,                               KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11,
 	KC_LGUI, LGUI(KC_1), LGUI(KC_2), LGUI(KC_3), LGUI(KC_4), LGUI(KC_5),          LGUI(KC_6), LGUI(KC_7), LGUI(KC_8), LGUI(KC_9), LGUI(KC_0), KC_F12,
-	KC_CAPS, RGB_TOG, RGB_MOD, RGB_HUI, RGB_SAI, DF(LETTERS),                     DF(GAMING), KC_MPLY, KC_MPRV, KC_MNXT, KC_PSCR, KC_PAUS,
-                                    _______, _______, _______,         _______, _______, _______)};
+	RGB_TOG, RGB_MOD, RGB_HUI, RGB_SAI, RGB_VAI, RGB_SPI,                         TG(GAMING), KC_MPLY, KC_MPRV, KC_MNXT, KC_PSCR, KC_PAUS,
+                                    _______, KC_CAPS, _______,         _______, _______, _______)};
 
 
 
@@ -117,7 +118,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (keycode == _MACRO_REC)
     {
         if (!s_macro_rec)
+        {
             s_macro_cursor = 0;
+            s_macro_pulse_count = 0;
+        }
         s_macro_rec = !s_macro_rec;
 
         return false;
@@ -145,3 +149,38 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     return true;
 };
+
+void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max)
+{
+    switch (get_highest_layer(layer_state|default_layer_state))
+    {
+        case GAMING:
+            rgb_matrix_set_color(38, 10, 10, 90);
+            break;
+    }
+
+    if (s_macro_rec)
+    {
+        int start = 21;
+        int num_indicators = 39 - start;
+        float capacity_fac = s_macro_cursor / (float)MACRO_MAX_SIZE;
+
+        for (int i = 0; i < (int)(capacity_fac * num_indicators); i++)
+        {
+            rgb_matrix_set_color(start + i,
+                capacity_fac * 100,
+                70 * (1.f - capacity_fac),
+                50 * (1.f - capacity_fac));
+        }
+
+        s_macro_pulse_count++;
+        int r1 = 10 + (1.f + sin((s_macro_pulse_count / 500.f) * 6.28f)) * 60;
+        int r2 = 10 + (1.f + sin(((s_macro_pulse_count + 150) / 500.f) * 6.28f)) * 60;
+        int r3 = 10 + (1.f + sin(((s_macro_pulse_count + 300) / 500.f) * 6.28f)) * 60;
+
+        rgb_matrix_set_color(39, r1, 0, 0);
+        rgb_matrix_set_color(40, r2, 0, 0);
+        rgb_matrix_set_color(41, r3, 0, 0);
+
+    }
+}

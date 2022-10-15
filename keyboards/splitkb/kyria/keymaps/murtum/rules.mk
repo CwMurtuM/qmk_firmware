@@ -15,4 +15,4 @@ GRAVE_ESC_ENABLE = no
 MAGIC_ENABLE = no
 MUSIC_ENABLE = no
 
-DEFAULT_FOLDER = splitkb/kyria/rev1
+DEFAULT_FOLDER = splitkb/kyria/rev2
