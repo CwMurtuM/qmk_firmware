@@ -152,12 +152,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max)
 {
-    switch (get_highest_layer(layer_state|default_layer_state))
-    {
-        case GAMING:
-            rgb_matrix_set_color(38, 10, 10, 90);
-            break;
-    }
+    if (layer_state_is(GAMING))
+        rgb_matrix_set_color(38, 10, 10, 60);
 
     if (s_macro_rec)
     {
